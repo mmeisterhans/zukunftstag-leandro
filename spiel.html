@@ -11,9 +11,9 @@
 <body>
   <main>
     <header><a href="index.html">← Zur Barça-Seite</a><span>LEANDROS GAME</span></header>
-    <section class="intro"><div><p class="eyebrow">DEIN WEG GEHT NACH OBEN</p><h1>AIR<span>JUMPERS</span></h1><p>Wolken-Parkour mit Laserpistole, Schlag und Schutzschild. Besiege alle acht Bosse!</p></div><div class="badge">8 BOSSE<br><span>Bist du bereit?</span></div></section>
+    <section class="intro"><div><p class="eyebrow">DEIN WEG GEHT NACH OBEN</p><h1>AIR<span>JUMPERS</span></h1><p>Parkour mit Laserpistole, Schlag und Schutzschild. Besiege alle acht Bosse!</p></div><div class="badge">8 BOSSE<br><span>Bist du bereit?</span></div></section>
     <section class="game" aria-label="Air Jumpers">
-      <div class="toolbar"><strong id="level">01 / 08 · Die ersten Sprünge</strong><span id="hearts" aria-label="5 von 5 Herzen">♥♥♥♥♥</span><span id="progress">Weg: 0%</span><span id="falls">Stürze: 0</span><button id="god-mode" type="button" aria-pressed="false">Unverwundbar: Aus</button><button id="freecam" type="button" aria-pressed="false">Freecam: Aus</button><button id="restart" type="button">↻ Neustart</button></div>
+      <div class="toolbar"><strong id="level">01 / 08 · Die ersten Sprünge</strong><span id="hearts" aria-label="5 von 5 Herzen">♥♥♥♥♥</span><span id="progress">Weg: 0%</span><span id="falls">Stürze: 0</span><button id="god-mode" type="button" aria-pressed="false">Unverwundbar: Aus</button><button id="freecam" type="button" aria-pressed="false">Freecam: Aus</button><button id="skip-level" type="button">Level überspringen ⏭</button><button id="restart" type="button">↻ Neustart</button></div>
       <div class="stage">
         <canvas id="game" width="960" height="520" tabindex="0" aria-label="Air Jumpers. Pfeiltasten zum Laufen, Leertaste zum Springen, F für Feuerbälle, L für die Laserpistole mit fünf Sekunden Abklingzeit, G für Schlag und D für Schutzschild. Besiege den Boss, um das nächste Level freizuschalten.">Dein Browser unterstützt dieses Spiel leider nicht.</canvas>
         <div class="overlay" id="overlay" hidden><div><p class="eyebrow" id="result-label">GESCHAFFT!</p><h2 id="result-title">Level beendet!</h2><p id="result-text"></p><button id="next" type="button">Nächstes Level →</button></div></div>
@@ -26,13 +26,13 @@
         <button type="button" data-control="left" aria-label="Nach links laufen, gedrückt halten">◀</button>
         <button type="button" data-control="right" aria-label="Nach rechts laufen, gedrückt halten">▶</button>
       </div>
-      <div class="touch-actions" role="group" aria-label="Springen und Fähigkeiten">
-        <button type="button" data-control="jump">Springen ↑</button>
+      <div class="touch-actions" role="group" aria-label="Fähigkeiten">
         <button type="button" data-control="fire" aria-label="Feuerbälle: gedrückt halten">🔥 Feuer</button>
         <button type="button" id="punch" data-ability="punch">Schlag · G</button>
         <button type="button" id="shield" data-ability="shield">Schild · D</button>
         <button type="button" id="laser" data-ability="laser">Laser · L</button>
       </div>
+      <button type="button" class="touch-jump" data-control="jump">Springen ↑</button>
     </div>
     <div id="freecam-controls" class="freecam-controls" aria-label="Freie Kamera steuern" hidden>
       <button type="button" data-camera="left" aria-label="Kamera nach links">←</button>
@@ -42,7 +42,7 @@
       <span>Bild mit Maus oder Finger ziehen. Mit «Freecam» zurück zur Figur.</span>
     </div>
     <div class="touch-tools"><span>Mehrere Finger funktionieren gleichzeitig. C: Freecam an/aus. In der Freecam: Pfeiltasten / WASD oder Bild ziehen.</span></div>
-    <footer>Auf der langen Wolke vor dem Boss drehen sich Feuerbälle: Warte auf eine Lücke oder spring darüber! Der Schild schützt dich.<br>Sturz: −2 Herzen und zurück auf die letzte Wolke, ohne normale Monster. Der Boss bleibt. Ohne Herzen startet das Level neu.</footer>
+    <footer>Spring von oben auf Goombas: Sie werden sofort besiegt und du verlierst kein Herz. Berührungen von der Seite kosten ein Herz.<br>Sturz: −2 Herzen und zurück auf die letzte Plattform, ohne normale Monster. Der Boss bleibt. Ohne Herzen startet das Level neu.</footer>
   </main>
 </body>
 </html>

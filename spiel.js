@@ -2,7 +2,7 @@
 const levels = [
   { name: 'Die ersten Sprünge', platforms: [[0,440,210],[270,390,150],[480,335,140],[680,290,280]], goal: {x:865,y:290} },
   { name: 'Über den Wolken', platforms: [[0,445,170],[230,385,115],[405,320,110],[575,260,110],[750,205,210]], goal: {x:870,y:205} },
-  { name: 'Der erste Gipfel', platforms: [[0,450,145],[210,385,95],[375,315,90],[535,245,90],[695,175,90],[835,125,125]], goal: {x:900,y:125} },
+  { name: 'Durchs Wolkental', platforms: [[0,350,210],[275,420,135],[475,340,135],[675,250,125],[855,165,145]], goal: {x:940,y:165} },
   { name: 'Monster auf den Dächern', platforms: [[0,445,180],[235,385,140],[430,330,130],[620,275,120],[800,220,160]], goal: {x:905,y:220} },
   { name: 'Die schwebenden Inseln', platforms: [[0,440,160],[225,355,115],[405,400,120],[585,310,115],[765,235,195]], goal: {x:900,y:235} },
   { name: 'Feuer über der Stadt', platforms: [[0,450,165],[230,370,105],[400,285,110],[575,350,115],[755,260,205]], goal: {x:900,y:260} },
@@ -10,26 +10,19 @@ const levels = [
   { name: 'Das grosse Finale', platforms: [[0,455,145],[210,370,95],[370,285,95],[530,365,100],[695,270,95],[850,180,110]], goal: {x:910,y:180} }
 ];
 
-// Zwei zusätzliche Dächer statt acht: Die Strecke ist jetzt ungefähr halb so lang.
-const extensionHeights = [340,260];
+// Zwei weitere Sprungplattformen verlängern den Weg zur Boss-Arena ein wenig.
+const extensionHeights = [340,260,330,250];
 levels.forEach((level,index) => {
   let last = level.platforms[level.platforms.length-1];
   extensionHeights.forEach((baseY,step) => {
     const gap = Math.min(140,95 + (index%3)*20 + (step%2)*25);
     const y = Math.max(140,Math.min(420,baseY+(index%3)*20));
-    const platform = [last[0]+last[2]+gap,y,step===extensionHeights.length-1 ? 520 : 400];
+    const platform = [last[0]+last[2]+gap,y,step===extensionHeights.length-1 ? 520 : step===0 ? 400 : 145+(step-1)*10];
     level.platforms.push(platform);
     last = platform;
   });
   level.worldWidth = last[0]+last[2];
   level.goal = {x:last[0]+last[2]-60,y:last[1]};
-  const firePlatformIndex=level.platforms.length-2;
-  const [fireX,fireY]=level.platforms[firePlatformIndex];
-  level.fireRotors=[110,290].map((offset,i)=>({
-    x:fireX+offset,y:fireY-42,radius:40,
-    speed:(i===0?1:-1)*(0.024+index*0.0015),phase:i*Math.PI/2,
-    platformIndex:firePlatformIndex
-  }));
 });
 const canvas = document.querySelector('#game');
 const ctx = canvas.getContext('2d');
@@ -45,6 +38,7 @@ function syncInput() {
   }
 }
 let levelIndex = 0, falls = 0, completed = false, jumpQueued = false;
+const skippedLevels = new Set();
 let player, grounded = false, coyote = 0, tick = 0;
 let cameraX = 0, lastPlatformIndex = 0;
 let cameraY = 0, freecam = false, cameraDrag = null;
@@ -80,7 +74,6 @@ const maxHearts = 5;
 let monsters = [], fireballs = [], sparks = [], hearts = maxHearts, invincible = 0, cooldown = 0, facing = 1;
 let boss, bossShots = [], punchFrames = 0, punchCooldown = 0, punchDirection = 1, shieldFrames = 0, shieldCooldown = 0;
 let laserCooldown = 0, laserFrames = 0, laser = null;
-let hazardTick = 0;
 let godMode = false;
 const punchHits = new Set();
 const width = 26, height = 49;
@@ -92,6 +85,7 @@ function updateAbilityDisplay() {
   document.querySelector('#shield').disabled = completed || freecam || shieldCooldown>0;
   document.querySelector('#laser').textContent = laserCooldown ? `Laser: ${(laserCooldown/60).toFixed(1)}s` : 'Laser · L';
   document.querySelector('#laser').disabled = completed || freecam || laserCooldown>0;
+  document.querySelector('#skip-level').disabled = completed;
 }
 
 function useAbility(name) {
@@ -128,7 +122,6 @@ function startLevel() {
   player = { x:45, y:levels[levelIndex].platforms[0][1]-height, vx:0, vy:0 };
   grounded = true; coyote = 6; completed = false; jumpQueued = false;
   cameraX = 0; lastPlatformIndex = 0;
-  hazardTick=0;
   clearInput();
   hearts = maxHearts; invincible = 0; cooldown = 0; facing = 1;
   fireballs = []; sparks = [];
@@ -147,7 +140,7 @@ function startLevel() {
   overlay.hidden = true;
   document.querySelector('#level').textContent = `${String(levelIndex+1).padStart(2,'0')} / ${String(levels.length).padStart(2,'0')} · ${levels[levelIndex].name}`;
   statusText.textContent = 'F: Feuerball. L: Laserpistole. G: Schlag. D: Schild. Besiege den Boss!';
-  if (monsterHealth > 1) statusText.textContent = `Achtung: Die Monster brauchen jetzt ${monsterHealth} Feuerball-Treffer!`;
+  statusText.textContent = 'Spring von oben auf Goombas, um sie ohne Schaden zu besiegen! G: Schlag. L: Laser.';
 }
 
 // Ein Sturz kostet zwei Herzen. Die zuletzt betretene Plattform ist der Rücksetzpunkt.
@@ -171,7 +164,7 @@ function respawnAfterFall() {
   resetAbilities();
   updateHearts();
   updateTravel();
-  statusText.textContent = godMode ? 'Unverwundbar: ohne Herzverlust zurück auf der letzten Wolke!' : 'Zwei Herzen verloren. Zurück auf der letzten Wolke – ohne Monster!';
+  statusText.textContent = godMode ? 'Unverwundbar: ohne Herzverlust zurück auf der letzten Plattform!' : 'Zwei Herzen verloren. Zurück auf der letzten Plattform – ohne Monster!';
 }
 
 function hurtPlayer() {
@@ -183,27 +176,6 @@ function hurtPlayer() {
     return true;
   }
   statusText.textContent = 'Autsch! G: geschützter Schlag. D: Schutzschild.';
-  return false;
-}
-
-// Zeichnung und Trefferprüfung verwenden dieselben Positionen der Feuerkugeln.
-function rotorBalls(rotor,time=hazardTick) {
-  const angle=time*rotor.speed+rotor.phase;
-  return [1,2,3].map(i=>({x:rotor.x+Math.cos(angle)*rotor.radius*i/3,y:rotor.y+Math.sin(angle)*rotor.radius*i/3,radius:10}));
-}
-
-function updateFireRotors() {
-  for(const rotor of levels[levelIndex].fireRotors) {
-    for(const ball of rotorBalls(rotor)) {
-      const nearX=Math.max(player.x,Math.min(ball.x,player.x+width));
-      const nearY=Math.max(player.y,Math.min(ball.y,player.y+height));
-      if ((ball.x-nearX)**2+(ball.y-nearY)**2 < ball.radius**2) {
-        const oldHearts=hearts;
-        if (hurtPlayer()) return true;
-        if (hearts<oldHearts) statusText.textContent='Heiss! Ein Herz verloren. Spring über die rotierenden Feuerbälle oder nutze den Schild.';
-      }
-    }
-  }
   return false;
 }
 
@@ -285,7 +257,7 @@ function updatePunch() {
   }
 }
 
-function updateCombat() {
+function updateCombat(oldFeet=player.y+height) {
   if (cooldown > 0) cooldown--;
   if (invincible > 0) invincible--;
   if (keys.fire) shoot();
@@ -296,6 +268,18 @@ function updateCombat() {
       monster.x = Math.max(monster.left,Math.min(monster.right,monster.x));
       monster.vx *= -1;
     }
+  }
+  // Auch bei schnellem Fallen zählt das Überqueren der Kopfoberkante als Treffer.
+  const stomp=player.vy>=0 ? monsters.filter(monster=>
+    monster.alive && oldFeet<=monster.y && player.y+height>=monster.y &&
+    player.x+width>monster.x && player.x<monster.x+32
+  ).sort((a,b)=>a.y-b.y)[0] : null;
+  if(stomp) {
+    stomp.alive=false;stomp.hp=0;
+    player.y=stomp.y-height;player.vy=-8.5;grounded=false;coyote=0;
+    invincible=Math.max(invincible,12);
+    for(let i=0;i<8;i++)sparks.push({x:stomp.x+16,y:stomp.y+8,vx:Math.cos(i*Math.PI/4)*2,vy:Math.sin(i*Math.PI/4)*2,life:18});
+    statusText.textContent='Draufgesprungen! Goomba besiegt – ohne Herzverlust.';
   }
   updatePunch();
   if (completed) return;
@@ -325,16 +309,29 @@ function updateCombat() {
   updateBoss();
 }
 
-function finishLevel() {
-  if (!completed && boss.hp===0) {
+function skipLevel() {
+  if (completed) return;
+  skippedLevels.add(levelIndex);
+  if (levelIndex===levels.length-1) {
+    setFreecam(false);
+    finishLevel(true);
+  } else {
+    levelIndex++;
+    startLevel();
+    canvas.focus({preventScroll:true});
+  }
+}
+
+function finishLevel(skipped=false) {
+  if (!completed && (boss.hp===0 || skipped)) {
     completed = true;
     clearInput();
     bossShots=[];
     updateAbilityDisplay();
     const last = levelIndex === levels.length-1;
-    document.querySelector('#result-label').textContent = last ? 'AIR JUMPERS CHAMPION' : 'BOSS BESIEGT!';
-    document.querySelector('#result-title').textContent = last ? 'Alle Level geschafft!' : `Level ${levelIndex+1} geschafft!`;
-    document.querySelector('#result-text').textContent = last ? `Alle acht Bosse besiegt! Du hast den Parkour mit ${falls} Stürzen gemeistert.` : 'Der Weg ist frei! Bereit für das nächste Level?';
+    document.querySelector('#result-label').textContent = skipped ? 'LEVEL ÜBERSPRUNGEN' : last ? 'AIR JUMPERS CHAMPION' : 'BOSS BESIEGT!';
+    document.querySelector('#result-title').textContent = last ? (skippedLevels.size ? 'Spiel beendet!' : 'Alle Level geschafft!') : `Level ${levelIndex+1} geschafft!`;
+    document.querySelector('#result-text').textContent = last ? (skippedLevels.size ? `Du hast ${skippedLevels.size} Level übersprungen. Lust auf eine neue Runde?` : `Alle acht Bosse besiegt! Du hast den Parkour mit ${falls} Stürzen gemeistert.`) : 'Der Weg ist frei! Bereit für das nächste Level?';
     document.querySelector('#next').textContent = last ? 'Noch einmal spielen ↻' : 'Nächstes Level →';
     statusText.textContent = last ? `Du hast alle ${levels.length} Level beendet!` : 'Level beendet!';
     overlay.hidden = false;
@@ -347,7 +344,6 @@ function update() {
   if (freecam) {updateFreecam();return;}
   tick++;
   if (completed) return;
-  hazardTick++;
   if (punchFrames>0) punchFrames--;
   if (punchCooldown>0) punchCooldown--;
   if (shieldFrames>0) shieldFrames--;
@@ -378,16 +374,14 @@ function update() {
     respawnAfterFall();
     return;
   }
-  updateCombat();
-  if (!completed && updateFireRotors()) return;
+  updateCombat(oldFeet);
   updateTravel();
   updateAbilityDisplay();
 }
 
 const renderer = new ParkourRenderer2D(canvas,ctx);
 function draw() {
-  const fireRotors=levels[levelIndex].fireRotors.map(rotor=>({...rotor,balls:rotorBalls(rotor)}));
-  renderer.render({level:levels[levelIndex],levelIndex,player,monsters,boss,bossShots,fireballs,sparks,cameraX,cameraY,tick,facing,grounded,invincible,punchFrames,punchDirection,shieldFrames,laserFrames,laser,fireRotors});
+  renderer.render({level:levels[levelIndex],levelIndex,player,monsters,boss,bossShots,fireballs,sparks,cameraX,cameraY,tick,facing,grounded,invincible,punchFrames,punchDirection,shieldFrames,laserFrames,laser});
 }
 
 
@@ -489,9 +483,10 @@ document.querySelector('#god-mode').addEventListener('click',() => {
   statusText.textContent=godMode ? 'Unverwundbarkeit eingeschaltet. Auch Stürze kosten keine Herzen.' : 'Unverwundbarkeit ausgeschaltet. Du kannst wieder Herzen verlieren.';
 });
 document.querySelector('#restart').addEventListener('click',() => { startLevel(); canvas.focus({preventScroll:true}); });
+document.querySelector('#skip-level').addEventListener('click',skipLevel);
 document.querySelector('#next').addEventListener('click',() => {
   if (!completed) return;
-  if (levelIndex===levels.length-1) { levelIndex=0; falls=0; document.querySelector('#falls').textContent='Stürze: 0'; }
+  if (levelIndex===levels.length-1) { levelIndex=0; falls=0; skippedLevels.clear(); document.querySelector('#falls').textContent='Stürze: 0'; }
   else levelIndex++;
   startLevel(); canvas.focus({preventScroll:true});
 });
