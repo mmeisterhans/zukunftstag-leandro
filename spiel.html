@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Air Jumpers – Leandros Game</title>
+  <link rel="stylesheet" href="spiel.css">
+  <script src="renderer-2d.js" defer></script>
+  <script src="spiel.js" defer></script>
+</head>
+<body>
+  <main>
+    <header><a href="index.html">← Zur Barça-Seite</a><span>LEANDROS GAME</span></header>
+    <section class="intro"><div><p class="eyebrow">DEIN WEG GEHT NACH OBEN</p><h1>AIR<span>JUMPERS</span></h1><p>Wolken-Parkour mit Laserpistole, Schlag und Schutzschild. Besiege alle acht Bosse!</p></div><div class="badge">8 BOSSE<br><span>Bist du bereit?</span></div></section>
+    <section class="game" aria-label="Air Jumpers">
+      <div class="toolbar"><strong id="level">01 / 08 · Die ersten Sprünge</strong><span id="hearts" aria-label="5 von 5 Herzen">♥♥♥♥♥</span><span id="progress">Weg: 0%</span><span id="falls">Stürze: 0</span><button id="god-mode" type="button" aria-pressed="false">Unverwundbar: Aus</button><button id="freecam" type="button" aria-pressed="false">Freecam: Aus</button><button id="restart" type="button">↻ Neustart</button></div>
+      <div class="stage">
+        <canvas id="game" width="960" height="520" tabindex="0" aria-label="Air Jumpers. Pfeiltasten zum Laufen, Leertaste zum Springen, F für Feuerbälle, L für die Laserpistole mit fünf Sekunden Abklingzeit, G für Schlag und D für Schutzschild. Besiege den Boss, um das nächste Level freizuschalten.">Dein Browser unterstützt dieses Spiel leider nicht.</canvas>
+        <div class="overlay" id="overlay" hidden><div><p class="eyebrow" id="result-label">GESCHAFFT!</p><h2 id="result-title">Level beendet!</h2><p id="result-text"></p><button id="next" type="button">Nächstes Level →</button></div></div>
+      </div>
+      <p id="status" role="status" aria-live="polite">Erreiche die Boss-Arena! Besiege den Boss mit deinen Fähigkeiten.</p>
+    </section>
+    <div class="instructions"><span><kbd>←</kbd> <kbd>→</kbd> Laufen</span><span><kbd>Leertaste</kbd> / <kbd>↑</kbd> Springen</span><span><kbd>F</kbd> Feuerball (halten)</span><span><kbd>L</kbd> Laser · 5 s Pause</span><span><kbd>G</kbd> Schlag · kurz unverwundbar · 0,75 s Pause</span><span><kbd>D</kbd> Schild · 5 s Pause</span></div>
+    <div class="touch" id="play-controls" aria-label="Touch-Steuerung">
+      <div class="touch-movement" role="group" aria-label="Laufen: gedrückt halten">
+        <button type="button" data-control="left" aria-label="Nach links laufen, gedrückt halten">◀</button>
+        <button type="button" data-control="right" aria-label="Nach rechts laufen, gedrückt halten">▶</button>
+      </div>
+      <div class="touch-actions" role="group" aria-label="Springen und Fähigkeiten">
+        <button type="button" data-control="jump">Springen ↑</button>
+        <button type="button" data-control="fire" aria-label="Feuerbälle: gedrückt halten">🔥 Feuer</button>
+        <button type="button" id="punch" data-ability="punch">Schlag · G</button>
+        <button type="button" id="shield" data-ability="shield">Schild · D</button>
+        <button type="button" id="laser" data-ability="laser">Laser · L</button>
+      </div>
+    </div>
+    <div id="freecam-controls" class="freecam-controls" aria-label="Freie Kamera steuern" hidden>
+      <button type="button" data-camera="left" aria-label="Kamera nach links">←</button>
+      <button type="button" data-camera="up" aria-label="Kamera nach oben">↑</button>
+      <button type="button" data-camera="down" aria-label="Kamera nach unten">↓</button>
+      <button type="button" data-camera="right" aria-label="Kamera nach rechts">→</button>
+      <span>Bild mit Maus oder Finger ziehen. Mit «Freecam» zurück zur Figur.</span>
+    </div>
+    <div class="touch-tools"><span>Mehrere Finger funktionieren gleichzeitig. C: Freecam an/aus. In der Freecam: Pfeiltasten / WASD oder Bild ziehen.</span></div>
+    <footer>Auf der langen Wolke vor dem Boss drehen sich Feuerbälle: Warte auf eine Lücke oder spring darüber! Der Schild schützt dich.<br>Sturz: −2 Herzen und zurück auf die letzte Wolke, ohne normale Monster. Der Boss bleibt. Ohne Herzen startet das Level neu.</footer>
+  </main>
+</body>
+</html>
