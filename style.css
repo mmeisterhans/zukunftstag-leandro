@@ -1,6 +1,27 @@
 /* Probiere andere Farbnamen und Schriften aus. */
 body {
-  background-color: white;
+  background-color: rgb(15, 48, 240);
   color: black;
   font-family: Arial;
+}
+
+h1 {
+  color:white;
+}
+h2{color: #ffffff;}
+p{color: #ffffff;}
+
+.container {
+  display: flex;
+  gap:  10px;
+}
+
+.spieler {
+  border: 1px solid black;
+  border-radius: 10px;
+  background-color: rgb(60, 88, 248);
+}
+
+img {
+  border-radius: 10px;
 }
