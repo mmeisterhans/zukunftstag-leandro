@@ -43,11 +43,8 @@ kbd { display: inline-block; padding: 4px 7px; border: 1px solid #42526c; border
 #punch, #shield { color: #a5f3ef; border-color: #4a9399; background: #193b4c; }
 #laser { color: #b7f8ff; border-color: #52c7e3; background: #193e5b; }
 button:disabled { opacity: .55; cursor: default; }
-#god-mode { min-height: 44px; touch-action: manipulation; }
-#god-mode[aria-pressed="true"] { background: #27634d; color: #d7ffdc; border-color: #86edb4; }
 #freecam { min-height: 44px; touch-action: manipulation; }
 #freecam[aria-pressed="true"] { background: #493767; border-color: #c3a7f3; }
-#skip-level { min-height: 44px; touch-action: manipulation; color: #ffe4aa; border-color: #a9864d; }
 canvas.freecam { cursor: grab; touch-action: none; }
 canvas.freecam:active { cursor: grabbing; }
 .touch[hidden], .freecam-controls[hidden] { display: none; }

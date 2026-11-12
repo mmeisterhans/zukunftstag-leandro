@@ -7,7 +7,11 @@ const levels = [
   { name: 'Die schwebenden Inseln', platforms: [[0,440,160],[225,355,115],[405,400,120],[585,310,115],[765,235,195]], goal: {x:900,y:235} },
   { name: 'Feuer über der Stadt', platforms: [[0,450,165],[230,370,105],[400,285,110],[575,350,115],[755,260,205]], goal: {x:900,y:260} },
   { name: 'Die Himmelsleiter', platforms: [[0,455,150],[210,380,95],[365,305,95],[520,230,95],[675,155,95],[830,95,130]], goal: {x:905,y:95} },
-  { name: 'Das grosse Finale', platforms: [[0,455,145],[210,370,95],[370,285,95],[530,365,100],[695,270,95],[850,180,110]], goal: {x:910,y:180} }
+  { name: 'Die Luftbrücke', platforms: [[0,455,145],[210,370,95],[370,285,95],[530,365,100],[695,270,95],[850,180,110]], goal: {x:910,y:180} },
+  { name: 'Zwischen den Schluchten', platforms: [[0,360,180],[245,435,130],[440,350,120],[625,425,130],[820,330,160]], goal: {x:920,y:330} },
+  { name: 'Der hohe Turm', platforms: [[0,450,180],[245,365,110],[420,280,110],[595,195,110],[770,125,190]], goal: {x:900,y:125} },
+  { name: 'Über den Stadtbogen', platforms: [[0,420,180],[245,340,125],[435,260,125],[625,340,125],[815,420,165]], goal: {x:920,y:420} },
+  { name: 'Die letzte Festung', platforms: [[0,450,165],[230,365,105],[400,280,105],[570,360,110],[745,270,110],[920,185,120]], goal: {x:980,y:185} }
 ];
 
 // Zwei weitere Sprungplattformen verlängern den Weg zur Boss-Arena ein wenig.
@@ -38,7 +42,6 @@ function syncInput() {
   }
 }
 let levelIndex = 0, falls = 0, completed = false, jumpQueued = false;
-const skippedLevels = new Set();
 let player, grounded = false, coyote = 0, tick = 0;
 let cameraX = 0, lastPlatformIndex = 0;
 let cameraY = 0, freecam = false, cameraDrag = null;
@@ -74,7 +77,6 @@ const maxHearts = 5;
 let monsters = [], fireballs = [], sparks = [], hearts = maxHearts, invincible = 0, cooldown = 0, facing = 1;
 let boss, bossShots = [], punchFrames = 0, punchCooldown = 0, punchDirection = 1, shieldFrames = 0, shieldCooldown = 0;
 let laserCooldown = 0, laserFrames = 0, laser = null;
-let godMode = false;
 const punchHits = new Set();
 const width = 26, height = 49;
 
@@ -85,7 +87,6 @@ function updateAbilityDisplay() {
   document.querySelector('#shield').disabled = completed || freecam || shieldCooldown>0;
   document.querySelector('#laser').textContent = laserCooldown ? `Laser: ${(laserCooldown/60).toFixed(1)}s` : 'Laser · L';
   document.querySelector('#laser').disabled = completed || freecam || laserCooldown>0;
-  document.querySelector('#skip-level').disabled = completed;
 }
 
 function useAbility(name) {
@@ -147,7 +148,7 @@ function startLevel() {
 function respawnAfterFall() {
   falls++;
   document.querySelector('#falls').textContent = `Stürze: ${falls}`;
-  if (!godMode) hearts = Math.max(0,hearts-2);
+  hearts = Math.max(0,hearts-2);
   if (hearts===0) {
     startLevel();
     statusText.textContent = 'Keine Herzen mehr! Das Level startet neu mit fünf Herzen.';
@@ -164,11 +165,11 @@ function respawnAfterFall() {
   resetAbilities();
   updateHearts();
   updateTravel();
-  statusText.textContent = godMode ? 'Unverwundbar: ohne Herzverlust zurück auf der letzten Plattform!' : 'Zwei Herzen verloren. Zurück auf der letzten Plattform – ohne Monster!';
+  statusText.textContent = 'Zwei Herzen verloren. Zurück auf der letzten Plattform – ohne Monster!';
 }
 
 function hurtPlayer() {
-  if (godMode || invincible>0 || shieldFrames>0 || punchFrames>0) return false;
+  if (invincible>0 || shieldFrames>0 || punchFrames>0) return false;
   hearts--; updateHearts(); invincible=100;
   if (hearts===0) {
     startLevel();
@@ -309,29 +310,16 @@ function updateCombat(oldFeet=player.y+height) {
   updateBoss();
 }
 
-function skipLevel() {
-  if (completed) return;
-  skippedLevels.add(levelIndex);
-  if (levelIndex===levels.length-1) {
-    setFreecam(false);
-    finishLevel(true);
-  } else {
-    levelIndex++;
-    startLevel();
-    canvas.focus({preventScroll:true});
-  }
-}
-
-function finishLevel(skipped=false) {
-  if (!completed && (boss.hp===0 || skipped)) {
+function finishLevel() {
+  if (!completed && boss.hp===0) {
     completed = true;
     clearInput();
     bossShots=[];
     updateAbilityDisplay();
     const last = levelIndex === levels.length-1;
-    document.querySelector('#result-label').textContent = skipped ? 'LEVEL ÜBERSPRUNGEN' : last ? 'AIR JUMPERS CHAMPION' : 'BOSS BESIEGT!';
-    document.querySelector('#result-title').textContent = last ? (skippedLevels.size ? 'Spiel beendet!' : 'Alle Level geschafft!') : `Level ${levelIndex+1} geschafft!`;
-    document.querySelector('#result-text').textContent = last ? (skippedLevels.size ? `Du hast ${skippedLevels.size} Level übersprungen. Lust auf eine neue Runde?` : `Alle acht Bosse besiegt! Du hast den Parkour mit ${falls} Stürzen gemeistert.`) : 'Der Weg ist frei! Bereit für das nächste Level?';
+    document.querySelector('#result-label').textContent = last ? 'AIR FIGHTERS CHAMPION' : 'BOSS BESIEGT!';
+    document.querySelector('#result-title').textContent = last ? 'Alle Level geschafft!' : `Level ${levelIndex+1} geschafft!`;
+    document.querySelector('#result-text').textContent = last ? `Alle ${levels.length} Bosse besiegt! Du hast den Parkour mit ${falls} Stürzen gemeistert.` : 'Der Weg ist frei! Bereit für das nächste Level?';
     document.querySelector('#next').textContent = last ? 'Noch einmal spielen ↻' : 'Nächstes Level →';
     statusText.textContent = last ? `Du hast alle ${levels.length} Level beendet!` : 'Level beendet!';
     overlay.hidden = false;
@@ -475,18 +463,10 @@ canvas.addEventListener('pointermove',event=>{
 for(const type of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(type,event=>{
   if(cameraDrag?.id===event.pointerId)cameraDrag=null;
 });
-document.querySelector('#god-mode').addEventListener('click',() => {
-  godMode=!godMode;
-  const button=document.querySelector('#god-mode');
-  button.textContent=`Unverwundbar: ${godMode?'An':'Aus'}`;
-  button.setAttribute('aria-pressed',String(godMode));
-  statusText.textContent=godMode ? 'Unverwundbarkeit eingeschaltet. Auch Stürze kosten keine Herzen.' : 'Unverwundbarkeit ausgeschaltet. Du kannst wieder Herzen verlieren.';
-});
 document.querySelector('#restart').addEventListener('click',() => { startLevel(); canvas.focus({preventScroll:true}); });
-document.querySelector('#skip-level').addEventListener('click',skipLevel);
 document.querySelector('#next').addEventListener('click',() => {
   if (!completed) return;
-  if (levelIndex===levels.length-1) { levelIndex=0; falls=0; skippedLevels.clear(); document.querySelector('#falls').textContent='Stürze: 0'; }
+  if (levelIndex===levels.length-1) { levelIndex=0; falls=0; document.querySelector('#falls').textContent='Stürze: 0'; }
   else levelIndex++;
   startLevel(); canvas.focus({preventScroll:true});
 });
